@@ -1,7 +1,8 @@
 import type Database from 'better-sqlite3'
-import type { Message } from '../../types/domain.js'
+import type { MessageRepositoryPort } from '../../domain/ports/out/message.repository.port.js'
+import type { Message, MessageRole } from '../../domain/entities/message.entity.js'
 
-export class MessageRepository {
+export class SqliteMessageRepository implements MessageRepositoryPort {
   private readonly stmts: {
     findByConversation: Database.Statement<[number], Message>
     add: Database.Statement<[number, string, string], Message>
@@ -22,7 +23,7 @@ export class MessageRepository {
     return this.stmts.findByConversation.all(conversationId)
   }
 
-  add(conversationId: number, role: string, content: string): Message {
+  add(conversationId: number, role: MessageRole, content: string): Message {
     return this.stmts.add.get(conversationId, role, content) as Message
   }
 }

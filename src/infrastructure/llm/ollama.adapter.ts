@@ -1,44 +1,28 @@
-import { config } from '../config/env.js'
-import type { OllamaMessage } from '../types/domain.js'
+import { config } from '../../config/env.js'
+import type { LLMPort, LLMChunk } from '../../domain/ports/out/llm.port.js'
+import type { OllamaMessage } from '../../domain/entities/message.entity.js'
 
-interface OllamaChunk {
-  message?: { content: string }
-  done: boolean
-}
-
-export class LLMError extends Error {
-  constructor(
-    public readonly statusCode: number,
-    public readonly body: string
-  ) {
-    super(`Ollama error ${statusCode}`)
-    this.name = 'LLMError'
-  }
-}
-
-export class LLMService {
+export class OllamaAdapter implements LLMPort {
   async chat(messages: OllamaMessage[], signal?: AbortSignal): Promise<string> {
-    const res = await this.callOllama(messages, false, signal)
+    const res = await this.call(messages, false, signal)
     const data = (await res.json()) as { message: { content: string } }
     return data.message.content
   }
 
-  async *stream(
-    messages: OllamaMessage[],
-    signal?: AbortSignal
-  ): AsyncGenerator<OllamaChunk> {
-    const res = await this.callOllama(messages, true, signal)
+  async *stream(messages: OllamaMessage[], signal?: AbortSignal): AsyncGenerator<LLMChunk> {
+    const res = await this.call(messages, true, signal)
     if (!res.body) return
 
     for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
       const lines = Buffer.from(chunk).toString('utf8').split('\n').filter(Boolean)
       for (const line of lines) {
-        yield JSON.parse(line) as OllamaChunk
+        const parsed = JSON.parse(line) as { message?: { content: string }; done: boolean }
+        yield { content: parsed.message?.content, done: parsed.done }
       }
     }
   }
 
-  private async callOllama(
+  private async call(
     messages: OllamaMessage[],
     stream: boolean,
     signal?: AbortSignal
@@ -50,10 +34,7 @@ export class LLMService {
       body: JSON.stringify({ model: config.ollamaModel, messages, stream }),
     })
 
-    if (!res.ok) {
-      throw new LLMError(res.status, await res.text())
-    }
-
+    if (!res.ok) throw new Error(`Ollama ${res.status}: ${await res.text()}`)
     return res
   }
 }

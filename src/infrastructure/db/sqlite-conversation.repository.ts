@@ -1,7 +1,8 @@
 import type Database from 'better-sqlite3'
-import type { Conversation, ConversationSummary } from '../../types/domain.js'
+import type { ConversationRepositoryPort } from '../../domain/ports/out/conversation.repository.port.js'
+import type { Conversation, ConversationSummary } from '../../domain/entities/conversation.entity.js'
 
-export class ConversationRepository {
+export class SqliteConversationRepository implements ConversationRepositoryPort {
   private readonly stmts: {
     create: Database.Statement<[string], Conversation>
     list: Database.Statement<[], ConversationSummary>

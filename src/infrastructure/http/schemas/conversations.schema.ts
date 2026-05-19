@@ -1,8 +1,6 @@
 import { Type, type Static } from '@sinclair/typebox'
 
-export const IdParam = Type.Object({
-  id: Type.Integer(),
-})
+export const IdParam = Type.Object({ id: Type.Integer() })
 
 export const MessageSchema = Type.Object({
   id: Type.Integer(),

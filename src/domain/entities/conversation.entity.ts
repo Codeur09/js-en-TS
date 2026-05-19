@@ -1,5 +1,3 @@
-export type MessageRole = 'user' | 'assistant' | 'system'
-
 export interface Conversation {
   id: number
   title: string
@@ -14,12 +12,4 @@ export interface ConversationDetail extends Conversation {
   messages: Message[]
 }
 
-export interface Message {
-  id: number
-  conversationId: number
-  role: MessageRole
-  content: string
-  createdAt: string
-}
-
-export type OllamaMessage = Pick<Message, 'role' | 'content'>
+import type { Message } from './message.entity.js'
